@@ -1,0 +1,348 @@
+<!-- <!DOCTYPE html>
+<html>
+<body>
+
+<input id="username" placeholder="username">
+<input id="room" placeholder="room">
+
+<button onclick="connect()">Connect</button>
+
+<br><br>
+
+<input id="msg">
+<button onclick="send()">Send</button>
+
+<ul id="chat"></ul>
+
+<script>
+
+let socket
+
+function connect(){
+
+let username=document.getElementById("username").value
+let room=document.getElementById("room").value
+
+socket=new WebSocket("ws://localhost:8765")
+
+socket.onopen=function(){
+
+socket.send(JSON.stringify({
+username:username,
+room:room
+}))
+
+}
+
+socket.onmessage=function(event){
+
+let li=document.createElement("li")
+li.textContent=event.data
+document.getElementById("chat").appendChild(li)
+
+}
+
+}
+
+function send(){
+
+let msgInput = document.getElementById("msg")
+let msg = msgInput.value.trim()
+
+if(msg === "") return
+
+socket.send(msg)
+
+msgInput.value = ""
+
+}
+
+socket.onmessage = function(event){
+
+let chat = document.getElementById("chat")
+
+let message = event.data
+
+let messageDiv = document.createElement("div")
+
+let username = document.getElementById("username").value
+
+if(message.startsWith(username + ":")){
+    messageDiv.className = "message sent"
+}else{
+    messageDiv.className = "message received"
+}
+
+messageDiv.innerText = message
+
+chat.appendChild(messageDiv)
+
+chat.scrollTop = chat.scrollHeight
+}
+
+</script>
+
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <style>
+        :root {
+            --primary-color: #0084ff;
+            --bg-color: #f0f2f5;
+            --chat-bg: #ffffff;
+            --sent-bg: #0084ff;
+            --received-bg: #e4e6eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 500px; /* Increased from 450px */
+            height: 85vh;
+            background: var(--chat-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .connect-panel {
+            display: flex;
+            padding: 15px;
+            gap: 10px;
+            background-color: #fafafa;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .connect-panel input {
+            flex: 1;
+            min-width: 0; /* Add this so inputs don't push the button out */
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #fff;
+        }
+
+        .connect-panel button {
+            flex-shrink: 0;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        /* Receiver message -> Left side */
+        .message.received {
+            background-color: var(--received-bg);
+            color: #050505;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Sender message -> Right side */
+        .message.sent {
+            background-color: var(--sent-bg);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .input-panel {
+            display: flex;
+            padding: 15px;
+            gap: 10px;
+            background-color: #fafafa;
+            border-top: 1px solid #ddd;
+        }
+
+        .input-panel input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-panel input:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0073e6;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header" id="status-header">
+        Join a Chat Room
+    </div>
+
+    <div class="connect-panel">
+        <input id="username" placeholder="Username" autocomplete="off">
+        <input id="room" placeholder="Room ID" autocomplete="off">
+        <button id="connectBtn" onclick="connect()">Connect</button>
+    </div>
+
+    <div id="chat" class="chat-messages"></div>
+
+    <div class="input-panel">
+        <input id="msg" placeholder="Type a message..." autocomplete="off" onkeypress="handleEnter(event)">
+        <button id="sendBtn" onclick="send()">Send</button>
+    </div>
+</div>
+
+<script>
+    let socket;
+    let currentUsername = "";
+
+    function connect() {
+        let usernameInput = document.getElementById("username");
+        let roomInput = document.getElementById("room");
+        
+        currentUsername = usernameInput.value.trim();
+        let room = roomInput.value.trim();
+
+        if (!currentUsername || !room) {
+            alert("Please enter both a username and a room ID.");
+            return;
+        }
+
+        // Initialize WebSocket
+        socket = new WebSocket("ws://localhost:8765");
+
+        socket.onopen = function() {
+            // Send initial connection payload
+            socket.send(JSON.stringify({
+                username: currentUsername,
+                room: room
+            }));
+            
+            // Update UI to show connection
+            document.getElementById("status-header").innerText = `Room: ${room}`;
+            document.getElementById("connectBtn").innerText = "Connected";
+            document.getElementById("connectBtn").disabled = true;
+            usernameInput.disabled = true;
+            roomInput.disabled = true;
+        };
+
+        // Combined and fixed onmessage handler
+        socket.onmessage = function(event) {
+            let chat = document.getElementById("chat");
+            let message = event.data;
+            let messageDiv = document.createElement("div");
+
+            // Determine if the message was sent by the current user or someone else
+            if (message.startsWith(currentUsername + ":")) {
+                messageDiv.className = "message sent";
+                // Optional: Strip the username out so your own bubbles just show the text
+                messageDiv.innerText = message.replace(currentUsername + ":", "").trim();
+            } else {
+                messageDiv.className = "message received";
+                messageDiv.innerText = message;
+            }
+
+            chat.appendChild(messageDiv);
+
+            // Auto scroll to the bottom
+            chat.scrollTop = chat.scrollHeight;
+        };
+
+        socket.onerror = function(error) {
+            console.error("WebSocket Error:", error);
+            alert("Failed to connect to the WebSocket server. Make sure your server is running on ws://localhost:8765");
+        };
+    }
+
+    function send() {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            alert("You must connect to a room first!");
+            return;
+        }
+
+        let msgInput = document.getElementById("msg");
+        let msg = msgInput.value.trim();
+
+        if (msg === "") return;
+
+        // Send the message
+        socket.send(msg);
+
+        // Clear the message box after sending
+        msgInput.value = "";
+        msgInput.focus();
+    }
+
+    // Allow sending messages by pressing the "Enter" key
+    function handleEnter(event) {
+        if (event.key === "Enter") {
+            send();
+        }
+    }
+</script>
+
+</body>
+</html>
