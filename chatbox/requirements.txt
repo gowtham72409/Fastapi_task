@@ -1,0 +1,12 @@
+fastapi 
+uvicorn 
+sqlalchemy 
+mysql-connector 
+python-jose 
+passlib[bcrypt] 
+python-multipart 
+jinja2
+dotenv 
+
+
+mongodb+srv://gowtham24:gowtham2409@cluster0.57lzg7h.mongodb.net/

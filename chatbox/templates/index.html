@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Chat</title>
+    <style>
+        .hidden { display: none; }
+        #messages { height: 300px; border: 1px solid #ccc; overflow-y: scroll; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="auth-section">
+    <h2>Login / Register</h2>
+    <input type="email" id="email" placeholder="Email"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+</div>
+
+<div id="chat-section" class="hidden">
+    <h2 id="welcome-msg"></h2>
+    <div id="messages"></div>
+    <input type="number" id="receiverId" placeholder="Send to User ID"><br>
+    <input type="text" id="messageInput" placeholder="Type message...">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+let currentUserId = null;
+let socket = null;
+
+async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const response = await fetch('/user/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email, password })
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        currentUserId = data.user_id;
+        startChat(data.user_id, data.name);
+    } else {
+        alert("Login failed");
+    }
+}
+
+function startChat(userId, name) {
+    document.getElementById("auth-section").classList.add("hidden");
+    document.getElementById("chat-section").classList.remove("hidden");
+    document.getElementById("welcome-msg").innerText = `Logged in as ${name} (ID: ${userId})`;
+
+    // Connect to WebSocket using the user_id
+    socket = new WebSocket(`ws://localhost:8000/chat/ws?user_id=${userId}`);
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        displayMessage(`User ${data.sender}: ${data.message}`);
+    };
+}
+
+function sendMessage() {
+    const rId = document.getElementById("receiverId").value;
+    const msg = document.getElementById("messageInput").value;
+
+    if (!rId || !msg) return;
+
+    const payload = JSON.stringify({
+        "receiver_id": parseInt(rId),
+        "message": msg
+    });
+
+    socket.send(payload);
+    displayMessage("Me: " + msg);
+    document.getElementById("messageInput").value = "";
+}
+
+function displayMessage(msg) {
+    const msgBox = document.getElementById("messages");
+    const div = document.createElement("div");
+    div.textContent = msg;
+    msgBox.appendChild(div);
+}
+</script>
+</body>
+</html>
