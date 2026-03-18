@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+        @keyframes pulse-ring { 0% { transform: scale(.33); opacity: 1; } 80%, 100% { opacity: 0; } }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 h-screen flex overflow-hidden">
+
+    <aside class="w-64 glass border-r border-slate-800 p-6 hidden md:flex flex-col">
+        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent mb-8">
+            <i class="fa-solid fa-robot mr-2"></i>AI Agent
+        </h1>
+        <div class="flex-1 space-y-4">
+            <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Capabilities</div>
+            <div class="flex items-center text-sm text-slate-400"><i class="fa-solid fa-earth-americas w-6"></i> Web Browsing</div>
+            <div class="flex items-center text-sm text-slate-400"><i class="fa-solid fa-brain w-6"></i> RAG Memory</div>
+            <div class="flex items-center text-sm text-slate-400"><i class="fa-solid fa-database w-6"></i> PGVector Storage</div>
+        </div>
+        <div class="pt-6 border-t border-slate-800">
+            <div id="status" class="flex items-center text-xs text-red-400">
+                <span class="relative flex h-2 w-2 mr-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span id="status-dot" class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+                Disconnected
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative">
+        <header class="h-16 border-b border-slate-800 flex items-center px-8 justify-between bg-slate-950/50">
+            <div class="font-medium">Active Session: <span class="text-blue-400">user1</span></div>
+            <button onclick="location.reload()" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-rotate"></i></button>
+        </header>
+
+        <div id="chat-window" class="flex-1 overflow-y-auto p-8 space-y-6">
+            <div class="flex justify-start">
+                <div class="glass p-4 rounded-2xl rounded-tl-none max-w-[80%] border-blue-500/30">
+                    Hello! I can browse the web or recall our past conversations. Try "Open Google" or "Search for the latest AI news."
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-gradient-to-t from-slate-950 to-transparent">
+            <form id="chat-form" class="max-w-4xl mx-auto relative">
+                <input type="text" id="user-input" 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-4 pl-6 pr-16 focus:outline-none focus:border-blue-500 transition-all placeholder-slate-500"
+                    placeholder="Ask your agent anything..." autocomplete="off">
+                <button type="submit" 
+                    class="absolute right-2 top-2 bottom-2 px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-full transition-all flex items-center justify-center">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const statusText = document.getElementById('status');
+        const statusDot = document.getElementById('status-dot');
+
+        // WebSocket Connection
+        const socket = new WebSocket('ws://localhost:8000/chat');
+
+        socket.onopen = () => {
+            statusText.innerText = "Connected";
+            statusText.classList.replace('text-red-400', 'text-emerald-400');
+            statusDot.classList.replace('bg-red-500', 'bg-emerald-500');
+        };
+
+        socket.onclose = () => {
+            statusText.innerText = "Disconnected";
+            statusText.classList.replace('text-emerald-400', 'text-red-400');
+            statusDot.classList.replace('bg-emerald-500', 'bg-red-500');
+        };
+
+        socket.onmessage = (event) => {
+            addMessage(event.data, 'assistant');
+        };
+
+        chatForm.onsubmit = (e) => {
+            e.preventDefault();
+            const msg = userInput.value.trim();
+            if (msg && socket.readyState === WebSocket.OPEN) {
+                addMessage(msg, 'user');
+                socket.send(msg);
+                userInput.value = '';
+            }
+        };
+
+        function addMessage(text, role) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = role === 'user' 
+                ? 'bg-blue-600 p-4 rounded-2xl rounded-tr-none max-w-[80%] text-white shadow-lg shadow-blue-900/20'
+                : 'glass p-4 rounded-2xl rounded-tl-none max-w-[80%] border-slate-700 text-slate-200';
+            
+            msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+            wrapper.appendChild(msgDiv);
+            chatWindow.appendChild(wrapper);
+            
+            // Auto-scroll to bottom
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    </script>
+</body>
+</html>
