@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Multi-Agent AI Chat</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+    <div class="header">Multi-Agent AI System</div>
+
+    <div class="chat-box" id="chat"></div>
+
+    <div class="input-area">
+        <input type="text" id="message" placeholder="Type your message..." />
+        <button class="send-btn" onclick="sendMessage()">Send</button>
+        <button class="upload-btn" onclick="uploadAudio()">Audio</button>
+        <button class="upload-btn" onclick="uploadVideo()">Video</button>
+    </div>
+</div>
+
+<input type="file" id="audioFile" class="file-input" accept="audio/*" />
+<input type="file" id="videoFile" class="file-input" accept="video/*" />
+<script src="script.js"></script>
+
+</body>
+</html>
