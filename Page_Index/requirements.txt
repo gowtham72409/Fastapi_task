@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+asyncpg
+aioredis
+httpx
+faster_whisper
+python-dotenv
+python-multipart
+httpx
+groq
+pypdf
+google-genai
