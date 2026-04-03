@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+asyncpg
+redis
+httpx
+faster_whisper
+python-dotenv
+python-multipart
+httpx
+groq
+pypdf
+pydantic
+sentence_transformers
