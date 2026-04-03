@@ -603,11 +603,13 @@ async def call_tool(req: CallRequest):
                     params.get("name", "New Company"),
                     params.get("domain", "")
                 )}
+
             if tool_name == "hubspot_create_ticket":
                 return {"result": await hs_create_ticket(
                     params.get("subject", "New Ticket"),
                     params.get("content", "")
                 )}
+  
 
     except HTTPException:
         raise
